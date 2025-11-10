@@ -1,0 +1,163 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20251110095903
+Username: PC-RODRIGO\rodri
+RunAs User: PC-RODRIGO\rodri
+Configuration Name: 
+Machine: PC-RODRIGO (Microsoft Windows NT 10.0.26200.0)
+Host Application: powershell.exe -NoExit -ExecutionPolicy Bypass -File C:\Users\rodri\source\DWDM - DCBOT\scripts\start-bot.ps1 -Dev
+Process ID: 12760
+PSVersion: 5.1.26100.7019
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7019
+BuildVersion: 10.0.26100.7019
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
++----------+
+| DWDM Bot |
++----------+
+Prerequisites OK.
+Collecting environment details...
+
+[Environment]
+  Mode: development (ts-node)
+  Node: v22.13.1
+  npm: 11.1.0
+  Env file: present
+Reading schedule snapshot...
+
+[Schedule]
+  Entries: 9
+  Last attempt: 2025-11-10 01:00:00 (8h 59m ago)
+  Last success: 2025-11-10 01:00:00 (8h 59m ago)
+    - ProgramaÃ§Ã£o Orientada a Objetos1Âº Semestre â€” TD01DWDM01 @ 09:00
+    - InglÃªs1Âº Semestre â€” TD01DWDM01 @ 14:00
+    - PortuguÃªs1Âº Semestre â€” TD01DWDM01 @ 17:00
+    + 6 more
+
+-- Installing dependencies (npm install)
+up to date, audited 337 packages in 2s
+140 packages are looking for funding
+  run `npm fund` for details
+found 0 vulnerabilities
+
+-- Starting bot (npm run dev)
+> dwdm-dcbot@1.0.0 dev
+> node --loader ts-node/esm src/bot.ts
+[09:59:27][INFO][DWDM#7514] Bot is ready
+{"level":"info","message":"Bot is ready","tag":"DWDM#7514"}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Schedule watcher enabled"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Announcements watcher enabled"}
+{"level":"info","message":"Background tasks initialized"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":94000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":504000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":209000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":324000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":510000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":224000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":196000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":277000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":157000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":41000}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":71000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":283000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":7000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":546000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":216000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":39000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":387000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":174000}
+{"level":"info","message":"Running schedule watcher"}
+{"level":"info","message":"NetPA: opening login page"}
+{"level":"info","message":"NetPA: triggering login dialog"}
+{"level":"info","message":"NetPA: filling credentials","formHost":"page"}
+{"level":"info","message":"NetPA: navigating to schedule page"}
+{"level":"info","message":"NetPA: extracted schedule entries","count":9,"source":"store","weekOffset":0}
+{"level":"info","message":"No schedule changes detected"}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}

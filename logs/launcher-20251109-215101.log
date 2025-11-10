@@ -1,0 +1,49 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20251109215102
+Username: PC-RODRIGO\rodri
+RunAs User: PC-RODRIGO\rodri
+Configuration Name: 
+Machine: PC-RODRIGO (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File scripts\start-bot.ps1 -SkipInstall -Dev
+Process ID: 45128
+PSVersion: 5.1.26100.7019
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7019
+BuildVersion: 10.0.26100.7019
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
++----------+
+| DWDM Bot |
++----------+
+Prerequisites OK.
+Collecting environment details...
+
+[Environment]
+  Mode: development (ts-node)
+  Node: v22.13.1
+  npm: 11.1.0
+  Env file: present
+Reading schedule snapshot...
+
+[Schedule]
+  Entries: 9
+  Last attempt: 2025-11-09 21:43:46 (7m ago)
+  Last success: 2025-11-09 21:43:46 (7m ago)
+    - ProgramaÃ§Ã£o Orientada a Objetos1Âº Semestre â€” TD01DWDM01 @ 09:00
+    - InglÃªs1Âº Semestre â€” TD01DWDM01 @ 14:00
+    - PortuguÃªs1Âº Semestre â€” TD01DWDM01 @ 17:00
+    + 6 more
+
+-- Starting bot (npm run dev)
+> dwdm-dcbot@1.0.0 dev
+> node --loader ts-node/esm src/bot.ts
+PS>TerminatingError(): "The pipeline has been stopped."
+**********************
+Windows PowerShell transcript end
+End time: 20251109215110
+**********************

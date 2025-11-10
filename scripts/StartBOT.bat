@@ -1,0 +1,1 @@
+powershell.exe -NoExit -ExecutionPolicy Bypass -File "C:\Users\rodri\source\DWDM - DCBOT\scripts\start-bot.ps1" -Dev

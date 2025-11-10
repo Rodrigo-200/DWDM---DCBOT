@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+  "target": "ES2021",
+  "module": "NodeNext",
+  "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "useUnknownInCatchVariables": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

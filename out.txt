@@ -1,0 +1,6 @@
+
++----------+
+| DWDM Bot |
++----------+
+Prerequisites OK.
+Rendering environment info...

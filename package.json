@@ -1,0 +1,40 @@
+{
+  "name": "dwdm-dcbot",
+  "version": "1.0.0",
+  "description": "Discord bot for schedule monitoring and announcements integration.",
+  "main": "dist/bot.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "start": "node dist/bot.js",
+    "dev": "node --loader ts-node/esm src/bot.ts",
+    "register:commands": "node --loader ts-node/esm scripts/registerCommands.ts",
+    "lint": "eslint . --ext .ts"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^2.0.1",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "discord-api-types": "^0.37.61",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "node-cron": "^3.0.3",
+    "playwright": "^1.39.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.10",
+    "@types/node-cron": "^3.0.11",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "@typescript-eslint/parser": "^6.8.0",
+    "eslint": "^8.52.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-import": "^2.28.1",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2"
+  }
+}
