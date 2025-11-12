@@ -1,5 +1,6 @@
 import { Client, Collection, Events, GatewayIntentBits, Interaction, MessageFlags } from 'discord.js';
 
+import { createCpInteractionHandler } from './features/cp/interactionHandler.js';
 import { getEnv } from './utils/env.js';
 import { logger } from './utils/logger.js';
 import { JsonStorage } from './utils/storage.js';
@@ -7,6 +8,7 @@ import { loadCommands } from './utils/commandLoader.js';
 import { initializeTasks } from './tasks/index.js';
 import type { BotCommand, CommandContext } from './types.js';
 import { defaultState, type PersistentState } from './state.js';
+import { CpClient } from './services/cpClient.js';
 
 type CommandCollection = Collection<string, BotCommand>;
 
@@ -27,6 +29,8 @@ const bootstrap = async () => {
   }
 
   const stateStorage = new JsonStorage<PersistentState>('data/state.json', defaultState);
+  const cpClient = new CpClient({ env });
+  const cpInteractionHandler = createCpInteractionHandler({ env, cpClient });
 
   client.once(Events.ClientReady, (readyClient: Client<true>) => {
     const user = readyClient.user;
@@ -38,6 +42,16 @@ const bootstrap = async () => {
   });
 
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
+    try {
+      if (await cpInteractionHandler(interaction)) {
+        return;
+      }
+    } catch (error) {
+      logger.error('CP interaction handler failed', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+
     if (!interaction.isChatInputCommand()) {
       return;
     }

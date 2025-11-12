@@ -22,7 +22,12 @@ const envSchema = z.object({
   TIMEZONE: z.string().default('Europe/Lisbon'),
   YOUTUBE_COOKIE: z.string().optional(),
   ENABLE_SCHEDULE_WATCHER: booleanFlag,
-  ENABLE_ANNOUNCEMENTS_WATCHER: booleanFlag
+  ENABLE_ANNOUNCEMENTS_WATCHER: booleanFlag,
+  CP_API_BASE_URL: z.string().url().default('https://api-gateway.cp.pt'),
+  CP_X_API_KEY: z.string().optional(),
+  CP_CONNECT_ID: z.string().optional(),
+  CP_CONNECT_SECRET: z.string().optional(),
+  CP_PANEL_CHANNEL_ID: z.string().min(1)
 });
 
 export type Env = z.infer<typeof envSchema>;

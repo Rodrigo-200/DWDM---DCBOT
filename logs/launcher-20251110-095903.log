@@ -161,3 +161,7 @@ found 0 vulnerabilities
 {"level":"info","message":"No schedule changes detected"}
 {"level":"info","message":"Running announcements watcher"}
 {"level":"info","message":"No new announcements detected"}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":47000}
+{"level":"info","message":"Applying jitter before scheduled task","delayMs":275000}
+{"level":"info","message":"Running announcements watcher"}
+{"level":"info","message":"No new announcements detected"}
