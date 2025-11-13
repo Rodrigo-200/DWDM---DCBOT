@@ -6,7 +6,9 @@ import {
   EmbedBuilder,
   Interaction,
   MessageFlags,
-  StringSelectMenuInteraction
+  StringSelectMenuBuilder,
+  StringSelectMenuInteraction,
+  StringSelectMenuOptionBuilder
 } from 'discord.js';
 
 import { CpClient, type TrainTimetableResponse, type TrainStop } from '../../services/cpClient.js';
@@ -18,6 +20,7 @@ import { getStationByCode, type StationLine } from './stations.js';
 const DAY_MINUTES = 24 * 60;
 const CP_TRAIN_DETAIL_PREFIX = 'cp-train';
 const CP_PAGE_PREFIX = 'cp-page';
+const CP_DESTINATION_SELECT_PREFIX = 'cp-dest';
 const TRAINS_PER_PAGE = 5;
 
 const DEFAULT_OCCUPANCY = 'Sem informação';
@@ -180,8 +183,12 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
     const platform = entry.platform ?? '—';
     const delay = formatDelay(entry.delayMinutes);
 
+    // Add day label if train is tomorrow
+    const dayOffset = Math.floor(entry.absoluteMinutes / DAY_MINUTES);
+    const dayLabel = dayOffset > 0 ? ` **(amanhã)**` : '';
+
     return [
-      `${movementIcon} ${baseTime} — ${movementLabel} ${directionLabel} • ${relative}`,
+      `${movementIcon} ${baseTime}${dayLabel} — ${movementLabel} ${directionLabel} • ${relative}`,
       `Comboio ${entry.trainNumber} • ${entry.service}`,
       `Plataforma ${platform} • Lotação ${occupancy} • ${delay}`
     ].join('\n');
@@ -672,7 +679,7 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
     }
   };
 
-  const handleTrainDetails = async (interaction: ButtonInteraction): Promise<void> => {
+  const handleTrainDetails = async (interaction: ButtonInteraction, selectedDestination?: string): Promise<void> => {
     const [_, trainNumberRaw, date] = interaction.customId.split('|');
     const trainNumber = trainNumberRaw?.trim();
 
@@ -690,13 +697,14 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
 
     try {
       const timetable = await cpClient.getTrainTimetable(trainNumber, date);
-      const embed = buildTrainDetailEmbed({
+      const { embed, components } = buildTrainDetailEmbed({
         timetable,
         trainNumber,
-        date
+        date,
+        selectedDestination
       });
 
-      await interaction.editReply({ embeds: [embed], components: [] });
+      await interaction.editReply({ embeds: [embed], components });
     } catch (error) {
       logger.error('Falha ao obter detalhe de comboio CP', {
         trainNumber,
@@ -713,12 +721,14 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
   const buildTrainDetailEmbed = ({
     timetable,
     trainNumber,
-    date
+    date,
+    selectedDestination
   }: {
     timetable: TrainTimetableResponse;
     trainNumber: string;
     date: string;
-  }): EmbedBuilder => {
+    selectedDestination?: string;
+  }): { embed: EmbedBuilder; components: ActionRowBuilder<StringSelectMenuBuilder>[] } => {
     const trainStops = normalizeTrainStops(timetable.trainStops ?? []);
     const origin = trainStops[0];
     const destination = trainStops[trainStops.length - 1];
@@ -762,6 +772,21 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
       .setDescription(`Serviço ${service}`)
       .setTimestamp(new Date())
       .setFooter({ text: `Horário ${date} • ${timezone}` });
+
+    // If a destination is selected, show arrival info
+    if (selectedDestination) {
+      const destStop = trainStops.find((stop) => stop.stationCode === selectedDestination);
+      if (destStop) {
+        const arrivalTime = destStop.estimatedArrival ?? destStop.scheduledArrival ?? '—';
+        const departureTime = destStop.estimatedDeparture ?? destStop.scheduledDeparture;
+        const timeInfo = departureTime ? `${arrivalTime} (partida ${departureTime})` : arrivalTime;
+        
+        embed.addFields({
+          name: '🎯 Destino selecionado',
+          value: `**${destStop.stationName}**\nChegada prevista: ${timeInfo}${destStop.platform ? `\nPlataforma: ${destStop.platform}` : ''}`
+        });
+      }
+    }
 
     embed.addFields(
       {
@@ -813,12 +838,85 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
       embed.setImage(mapUrl);
     }
 
-    return embed;
+    // Build destination select menu
+    const components: ActionRowBuilder<StringSelectMenuBuilder>[] = [];
+    
+    if (trainStops.length > 2) {
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId(`${CP_DESTINATION_SELECT_PREFIX}|${trainNumber}|${date}`)
+        .setPlaceholder('Seleciona o teu destino para ver a hora de chegada')
+        .setMinValues(1)
+        .setMaxValues(1);
+
+      // Add all stops except the origin as options
+      for (let i = 1; i < trainStops.length; i++) {
+        const stop = trainStops[i];
+        if (!stop) continue;
+        
+        const arrivalTime = stop.estimatedArrival ?? stop.scheduledArrival ?? '—';
+        selectMenu.addOptions(
+          new StringSelectMenuOptionBuilder()
+            .setLabel(stop.stationName)
+            .setValue(stop.stationCode)
+            .setDescription(`Chegada: ${arrivalTime}`)
+            .setDefault(stop.stationCode === selectedDestination)
+        );
+      }
+
+      components.push(new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(selectMenu));
+    }
+
+    return { embed, components };
+  };
+
+  const handleDestinationSelect = async (interaction: StringSelectMenuInteraction): Promise<void> => {
+    const [_, trainNumber, date] = interaction.customId.split('|');
+    const selectedDestination = interaction.values.at(0);
+
+    if (!trainNumber || !date || !selectedDestination) {
+      await interaction.reply({
+        content: 'Não consegui processar a seleção.',
+        flags: MessageFlags.Ephemeral
+      });
+      return;
+    }
+
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferUpdate();
+    }
+
+    try {
+      const timetable = await cpClient.getTrainTimetable(trainNumber, date);
+      const { embed, components } = buildTrainDetailEmbed({
+        timetable,
+        trainNumber,
+        date,
+        selectedDestination
+      });
+
+      await interaction.editReply({ embeds: [embed], components });
+    } catch (error) {
+      logger.error('Falha ao atualizar destino CP', {
+        trainNumber,
+        date,
+        selectedDestination,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      await interaction.editReply({
+        content: 'Não foi possível atualizar a informação.',
+        components: []
+      });
+    }
   };
 
   return async (interaction: Interaction): Promise<boolean> => {
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith(CP_STATION_SELECT_PREFIX)) {
       await handleStationSelect(interaction);
+      return true;
+    }
+
+    if (interaction.isStringSelectMenu() && interaction.customId.startsWith(CP_DESTINATION_SELECT_PREFIX)) {
+      await handleDestinationSelect(interaction);
       return true;
     }
 
