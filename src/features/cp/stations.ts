@@ -83,6 +83,7 @@ export const STATION_GROUPS: StationGroup[] = [
       { code: '94-62042', label: 'Mira Sintra - Meleças', line: 'sintra' },
       { code: '94-61044', label: 'Rio de Mouro', line: 'sintra' },
       { code: '94-61051', label: 'Mercês', line: 'sintra' },
+      { code: '94-61069', label: 'Algueirão - Mem Martins', line: 'sintra' },
       { code: '94-61093', label: 'Portela de Sintra', line: 'sintra' },
       { code: '94-61101', label: 'Sintra', line: 'sintra' }
     ]

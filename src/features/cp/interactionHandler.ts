@@ -30,6 +30,7 @@ const OCCUPANCY_MAP: Record<number, string> = {
 const STATUS_MAP: Record<string, string> = {
   AT_STATION: 'No cais',
   ON_ROUTE: 'Em marcha',
+  IN_TRANSIT: 'Em marcha',
   ENDED: 'Terminado',
   SUPPRESSED: 'Suprimido'
 };
@@ -58,6 +59,7 @@ interface StationBoardEntry {
 interface StationBoardResult {
   entries: StationBoardEntry[];
   referenceLabel: string;
+  absoluteNow: number;
 }
 
 interface NormalizedTrainStop {
@@ -106,6 +108,23 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
     return `+${value} min`;
   };
 
+  const formatRelativeTime = (target: number, reference: number): string => {
+    const delta = Math.round(target - reference);
+    if (Math.abs(delta) <= 1) {
+      return 'agora';
+    }
+
+    const absoluteDelta = Math.abs(delta);
+    if (absoluteDelta >= 60) {
+      const hours = Math.floor(absoluteDelta / 60);
+      const minutes = absoluteDelta % 60;
+      const formatted = minutes > 0 ? `${hours}h${minutes.toString().padStart(2, '0')}m` : `${hours}h`;
+      return delta > 0 ? `em ${formatted}` : `há ${formatted}`;
+    }
+
+    return delta > 0 ? `em ${absoluteDelta} min` : `há ${absoluteDelta} min`;
+  };
+
   const formatOccupancy = (value: string | number | null | undefined): string => {
     const parsed = Number(value);
     if (!Number.isNaN(parsed)) {
@@ -148,16 +167,19 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
     return Math.round(delta / (24 * 60 * 60 * 1000));
   };
 
-  const formatBoardEntry = (entry: StationBoardEntry): string => {
+  const formatBoardEntry = (entry: StationBoardEntry, absoluteNow: number): string => {
     const baseTime = entry.estimatedTime && entry.estimatedTime !== entry.scheduledTime ? `${entry.estimatedTime} (previsto)` : entry.scheduledTime;
     const destination = entry.isArrival ? entry.origin : entry.direction;
+    const movementIcon = entry.isArrival ? '⬅️' : '➡️';
     const movementLabel = entry.isArrival ? 'Chegada' : 'Partida';
+    const directionLabel = entry.isArrival ? `de ${destination}` : `para ${destination}`;
+    const relative = formatRelativeTime(entry.absoluteMinutes, absoluteNow);
     const occupancy = entry.occupancy ?? OCCUPANCY_MAP[0];
     const platform = entry.platform ?? '—';
     const delay = formatDelay(entry.delayMinutes);
 
     return [
-      `• ${baseTime} — ${movementLabel} ${entry.isArrival ? 'de' : 'para'} ${destination}`,
+      `${movementIcon} ${baseTime} — ${movementLabel} ${directionLabel} • ${relative}`,
       `Comboio ${entry.trainNumber} • ${entry.service}`,
       `Plataforma ${platform} • Lotação ${occupancy} • ${delay}`
     ].join('\n');
@@ -240,7 +262,7 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
     const reference = filtered[0]?.scheduledDate ?? dateFormatter.format(now);
     const referenceLabel = displayDateFormatter.format(new Date(`${reference}T00:00:00Z`));
 
-    return { entries: filtered, referenceLabel };
+    return { entries: filtered, referenceLabel, absoluteNow: nowMinutes };
   };
 
   const toNumber = (value: unknown): number | undefined => {
@@ -409,15 +431,26 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
       const embed = new EmbedBuilder()
         .setColor(embedColor)
         .setTitle(`🚉 ${station.label}`)
-        .setDescription(`Próximos serviços — ${board.referenceLabel}`)
+        .setDescription(`Horários previstos — ${board.referenceLabel}`)
         .setTimestamp(new Date())
         .setFooter({ text: `Horários em ${timezone}` });
 
+      const departures = board.entries.filter((entry) => !entry.isArrival);
+      const arrivals = board.entries.filter((entry) => entry.isArrival);
+
       embed.addFields(
-        board.entries.map((entry, index) => ({
-          name: `${index + 1}. Comboio ${entry.trainNumber}`,
-          value: formatBoardEntry(entry)
-        }))
+        {
+          name: 'Partidas',
+          value: departures.length > 0
+            ? departures.map((entry) => formatBoardEntry(entry, board.absoluteNow)).join('\n\n')
+            : 'Sem partidas previstas nas próximas horas.'
+        },
+        {
+          name: 'Chegadas',
+          value: arrivals.length > 0
+            ? arrivals.map((entry) => formatBoardEntry(entry, board.absoluteNow)).join('\n\n')
+            : 'Sem chegadas previstas nas próximas horas.'
+        }
       );
 
       const buttonsRow = new ActionRowBuilder<ButtonBuilder>();
@@ -518,8 +551,17 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
       ? trainStops.find((stop) => stop.stationCode === lastStationCode)
       : undefined;
 
-    const liveLat = toNumber(timetable.latitude);
-    const liveLon = toNumber(timetable.longitude);
+    let liveLat = toNumber(timetable.latitude);
+    let liveLon = toNumber(timetable.longitude);
+
+    if (liveLat == null || liveLon == null) {
+      liveLat = undefined;
+      liveLon = undefined;
+    } else if (Math.abs(liveLat) < 0.0001 && Math.abs(liveLon) < 0.0001) {
+      liveLat = undefined;
+      liveLon = undefined;
+    }
+
     const mapUrl = buildStaticMapUrl(trainStops, liveLat, liveLon);
 
     const embed = new EmbedBuilder()
