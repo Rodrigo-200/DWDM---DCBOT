@@ -17,6 +17,8 @@ import { getStationByCode, type StationLine } from './stations.js';
 
 const DAY_MINUTES = 24 * 60;
 const CP_TRAIN_DETAIL_PREFIX = 'cp-train';
+const CP_PAGE_PREFIX = 'cp-page';
+const TRAINS_PER_PAGE = 5;
 
 const DEFAULT_OCCUPANCY = 'Sem informação';
 
@@ -36,9 +38,9 @@ const STATUS_MAP: Record<string, string> = {
 };
 
 const LINE_COLORS: Record<StationLine, number> = {
-  cascais: 0x0099ff,
-  santarem: 0x2b6cb0,
-  sintra: 0x6b46c1
+  oeste: 0x0099ff, // blue - Cascais
+  norte: 0x2b6cb0, // darker blue - Santarém
+  noroeste: 0x6b46c1 // purple - Sintra
 };
 
 interface StationBoardEntry {
@@ -195,6 +197,15 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
       const dateStr = dateFormatter.format(date);
       const response = await cpClient.getStationTimetable(stationCode, dateStr);
       const stationStops = response.stationStops ?? [];
+
+      logger.info('CP Station Board Debug', {
+        stationCode,
+        dateStr,
+        totalStops: stationStops.length,
+        dayOffset,
+        nowMinutes,
+        currentTime: timeFormatter.format(now)
+      });
 
       for (const stop of stationStops) {
         if (stop.supression) {
@@ -392,7 +403,7 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
     return sampled;
   };
 
-  const handleStationSelect = async (interaction: StringSelectMenuInteraction): Promise<void> => {
+  const handleStationSelect = async (interaction: StringSelectMenuInteraction, page = 0): Promise<void> => {
     const stationCode = interaction.values.at(0);
     if (!stationCode) {
       await interaction.reply({
@@ -416,7 +427,7 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
     }
 
     try {
-      const board = await resolveStationBoard(stationCode, 5);
+      const board = await resolveStationBoard(stationCode, 50);
       if (board.entries.length === 0) {
         await interaction.editReply({
           content: 'Não existem comboios previstos para esta estação nas próximas horas.',
@@ -426,6 +437,12 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
         return;
       }
 
+      const totalPages = Math.ceil(board.entries.length / TRAINS_PER_PAGE);
+      const currentPage = Math.max(0, Math.min(page, totalPages - 1));
+      const startIdx = currentPage * TRAINS_PER_PAGE;
+      const endIdx = startIdx + TRAINS_PER_PAGE;
+      const pageEntries = board.entries.slice(startIdx, endIdx);
+
       const embedColor = LINE_COLORS[station.line] ?? 0x2b6cb0;
 
       const embed = new EmbedBuilder()
@@ -433,28 +450,35 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
         .setTitle(`🚉 ${station.label}`)
         .setDescription(`Horários previstos — ${board.referenceLabel}`)
         .setTimestamp(new Date())
-        .setFooter({ text: `Horários em ${timezone}` });
+        .setFooter({ 
+          text: totalPages > 1 
+            ? `Página ${currentPage + 1} de ${totalPages} • Horários em ${timezone}`
+            : `Horários em ${timezone}` 
+        });
 
-      const departures = board.entries.filter((entry) => !entry.isArrival);
-      const arrivals = board.entries.filter((entry) => entry.isArrival);
+      const departures = pageEntries.filter((entry) => !entry.isArrival);
+      const arrivals = pageEntries.filter((entry) => entry.isArrival);
 
       embed.addFields(
         {
           name: 'Partidas',
           value: departures.length > 0
             ? departures.map((entry) => formatBoardEntry(entry, board.absoluteNow)).join('\n\n')
-            : 'Sem partidas previstas nas próximas horas.'
+            : 'Sem partidas previstas nesta página.'
         },
         {
           name: 'Chegadas',
           value: arrivals.length > 0
             ? arrivals.map((entry) => formatBoardEntry(entry, board.absoluteNow)).join('\n\n')
-            : 'Sem chegadas previstas nas próximas horas.'
+            : 'Sem chegadas previstas nesta página.'
         }
       );
 
+      const components: ActionRowBuilder<ButtonBuilder>[] = [];
+
+      // Train detail buttons
       const buttonsRow = new ActionRowBuilder<ButtonBuilder>();
-      for (const entry of board.entries) {
+      for (const entry of pageEntries) {
         const customId = `${CP_TRAIN_DETAIL_PREFIX}|${entry.trainNumber}|${entry.scheduledDate}`;
         buttonsRow.addComponents(
           new ButtonBuilder()
@@ -463,10 +487,42 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
             .setLabel(`Detalhes ${entry.trainNumber}`)
         );
       }
+      components.push(buttonsRow);
+
+      // Pagination buttons (only if multiple pages)
+      if (totalPages > 1) {
+        const paginationRow = new ActionRowBuilder<ButtonBuilder>();
+        
+        paginationRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`${CP_PAGE_PREFIX}|${stationCode}|${currentPage - 1}`)
+            .setStyle(ButtonStyle.Primary)
+            .setLabel('◀ Anterior')
+            .setDisabled(currentPage === 0)
+        );
+
+        paginationRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`cp-page-info|${stationCode}|${currentPage}`)
+            .setStyle(ButtonStyle.Secondary)
+            .setLabel(`${currentPage + 1}/${totalPages}`)
+            .setDisabled(true)
+        );
+
+        paginationRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`${CP_PAGE_PREFIX}|${stationCode}|${currentPage + 1}`)
+            .setStyle(ButtonStyle.Primary)
+            .setLabel('Seguinte ▶')
+            .setDisabled(currentPage === totalPages - 1)
+        );
+
+        components.push(paginationRow);
+      }
 
       await interaction.editReply({
         embeds: [embed],
-        components: [buttonsRow]
+        components
       });
     } catch (error) {
       logger.error('Falha ao obter estação CP', {
@@ -475,6 +531,142 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
       });
       await interaction.editReply({
         content: 'Não foi possível obter a informação desta estação neste momento.',
+        components: []
+      });
+    }
+  };
+
+  const handlePageNavigation = async (interaction: ButtonInteraction): Promise<void> => {
+    const [_, stationCode, pageStr] = interaction.customId.split('|');
+    const page = toNumber(pageStr) ?? 0;
+
+    if (!stationCode) {
+      await interaction.reply({
+        content: 'Não consegui identificar a estação.',
+        flags: MessageFlags.Ephemeral
+      });
+      return;
+    }
+
+    if (!interaction.deferred && !interaction.replied) {
+      await interaction.deferUpdate();
+    }
+
+    const station = getStationByCode(stationCode);
+    if (!station) {
+      await interaction.editReply({
+        content: 'Estação desconhecida.',
+        components: []
+      });
+      return;
+    }
+
+    try {
+      const board = await resolveStationBoard(stationCode, 50);
+      if (board.entries.length === 0) {
+        await interaction.editReply({
+          content: 'Não existem comboios previstos para esta estação nas próximas horas.',
+          components: [],
+          embeds: []
+        });
+        return;
+      }
+
+      const totalPages = Math.ceil(board.entries.length / TRAINS_PER_PAGE);
+      const currentPage = Math.max(0, Math.min(page, totalPages - 1));
+      const startIdx = currentPage * TRAINS_PER_PAGE;
+      const endIdx = startIdx + TRAINS_PER_PAGE;
+      const pageEntries = board.entries.slice(startIdx, endIdx);
+
+      const embedColor = LINE_COLORS[station.line] ?? 0x2b6cb0;
+
+      const embed = new EmbedBuilder()
+        .setColor(embedColor)
+        .setTitle(`🚉 ${station.label}`)
+        .setDescription(`Horários previstos — ${board.referenceLabel}`)
+        .setTimestamp(new Date())
+        .setFooter({ 
+          text: totalPages > 1 
+            ? `Página ${currentPage + 1} de ${totalPages} • Horários em ${timezone}`
+            : `Horários em ${timezone}` 
+        });
+
+      const departures = pageEntries.filter((entry) => !entry.isArrival);
+      const arrivals = pageEntries.filter((entry) => entry.isArrival);
+
+      embed.addFields(
+        {
+          name: 'Partidas',
+          value: departures.length > 0
+            ? departures.map((entry) => formatBoardEntry(entry, board.absoluteNow)).join('\n\n')
+            : 'Sem partidas previstas nesta página.'
+        },
+        {
+          name: 'Chegadas',
+          value: arrivals.length > 0
+            ? arrivals.map((entry) => formatBoardEntry(entry, board.absoluteNow)).join('\n\n')
+            : 'Sem chegadas previstas nesta página.'
+        }
+      );
+
+      const components: ActionRowBuilder<ButtonBuilder>[] = [];
+
+      // Train detail buttons
+      const buttonsRow = new ActionRowBuilder<ButtonBuilder>();
+      for (const entry of pageEntries) {
+        const customId = `${CP_TRAIN_DETAIL_PREFIX}|${entry.trainNumber}|${entry.scheduledDate}`;
+        buttonsRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(customId)
+            .setStyle(ButtonStyle.Secondary)
+            .setLabel(`Detalhes ${entry.trainNumber}`)
+        );
+      }
+      components.push(buttonsRow);
+
+      // Pagination buttons
+      if (totalPages > 1) {
+        const paginationRow = new ActionRowBuilder<ButtonBuilder>();
+        
+        paginationRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`${CP_PAGE_PREFIX}|${stationCode}|${currentPage - 1}`)
+            .setStyle(ButtonStyle.Primary)
+            .setLabel('◀ Anterior')
+            .setDisabled(currentPage === 0)
+        );
+
+        paginationRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`cp-page-info|${stationCode}|${currentPage}`)
+            .setStyle(ButtonStyle.Secondary)
+            .setLabel(`${currentPage + 1}/${totalPages}`)
+            .setDisabled(true)
+        );
+
+        paginationRow.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`${CP_PAGE_PREFIX}|${stationCode}|${currentPage + 1}`)
+            .setStyle(ButtonStyle.Primary)
+            .setLabel('Seguinte ▶')
+            .setDisabled(currentPage === totalPages - 1)
+        );
+
+        components.push(paginationRow);
+      }
+
+      await interaction.editReply({
+        embeds: [embed],
+        components
+      });
+    } catch (error) {
+      logger.error('Falha ao navegar páginas CP', {
+        stationCode,
+        page,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      await interaction.editReply({
+        content: 'Não foi possível carregar esta página.',
         components: []
       });
     }
@@ -627,6 +819,11 @@ export const createCpInteractionHandler = ({ env, cpClient }: CpInteractionHandl
   return async (interaction: Interaction): Promise<boolean> => {
     if (interaction.isStringSelectMenu() && interaction.customId.startsWith(CP_STATION_SELECT_PREFIX)) {
       await handleStationSelect(interaction);
+      return true;
+    }
+
+    if (interaction.isButton() && interaction.customId.startsWith(CP_PAGE_PREFIX)) {
+      await handlePageNavigation(interaction);
       return true;
     }
 

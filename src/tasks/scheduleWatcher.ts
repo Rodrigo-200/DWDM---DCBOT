@@ -256,6 +256,7 @@ const upsertScheduleChangeMessage = async ({
 const buildScheduleEmbed = (entries: ScheduleEntry[], options: { serviceUnavailable?: boolean } = {}) => {
   const { serviceUnavailable = false } = options;
   const sortedEntries = [...entries].sort(compareEntries);
+  const now = new Date();
 
   const embed = new EmbedBuilder()
     .setTitle('📅 Horário semanal')
@@ -287,7 +288,12 @@ const buildScheduleEmbed = (entries: ScheduleEntry[], options: { serviceUnavaila
   }
 
   const rangeLabel = getScheduleRangeLabel(sortedEntries);
-  const nextEntry = sortedEntries[0];
+  
+  // Find the next upcoming class (not already started)
+  const nextEntry = sortedEntries.find((entry) => {
+    const entryDate = getEntryDate(entry);
+    return entryDate && entryDate.getTime() > now.getTime();
+  });
 
   if (rangeLabel) {
     headerLines.push(`**Período:** ${rangeLabel}`);

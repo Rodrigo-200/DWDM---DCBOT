@@ -15,10 +15,14 @@ export const buildCpPanelMessage = () => {
     .setTitle('🚆 Monitorização CP — Área de Lisboa')
     .setDescription(
       [
-        '1. Escolhe a linha correta no menu abaixo.',
-        '2. Seleciona a estação que queres monitorizar.',
-        "3. Usa os botões 'Detalhes' para veres percurso e localização em tempo real.",
-        'Podes repetir o processo sempre que precisares de outra estação.'
+        '**Como usar:**',
+        '1. Escolhe a **zona geográfica** no menu abaixo.',
+        '2. Seleciona a **estação** que queres monitorizar.',
+        "3. Usa os botões **'Detalhes'** para veres percurso e localização em tempo real.",
+        '',
+        '🌊 **Oeste**: Cascais, Estoril, Oeiras, Cais do Sodré',
+        '⬆️ **Norte**: Santa Apolónia, Oriente, Santarém, Azambuja',
+        '↖️ **Noroeste**: Rossio, Roma-Areeiro, Sintra, Amadora'
       ].join('\n')
     )
     .setFooter({ text: 'Dados fornecidos pela CP. Atualiza sempre a sinalética da estação.' });
