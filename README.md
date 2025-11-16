@@ -6,9 +6,8 @@ Discord bot designed for a school server with music playback, command management
 
 - Modern Discord slash commands with modular command loader.
 - Automated script to register commands globally or per guild.
-- Music system with high quality audio streaming, queue management, and playback controls.
-- Interactive now playing embed with pause/skip/loop buttons.
-- Hourly schedule watcher that authenticates against the NetPA portal and posts updates when changes are detected.
+- Metro Lisboa and CP interactive panels with dropdowns for estação/sentido and real-time wait times.
+- Hourly schedule watcher that authenticates against NetPA and keeps the pinned embeds fresh in the configured channel.
 - Announcement watcher that polls the IPLuso news page for new posts.
 - Persistent JSON storage for last known schedule and announcements.
 
@@ -25,8 +24,9 @@ Discord bot designed for a school server with music playback, command management
    ```
 
 3. **Environment variables**
-   - Copy `.env.example` to `.env` and fill in your Discord bot token, application client ID, optional guild ID, NetPA credentials, and target channel IDs.
-   - Provide `YOUTUBE_COOKIE` if you want to pass your YouTube session cookies to the music subsystem (recommended for region-restricted videos).
+   - Copy `.env.example` to `.env` and fill in: Discord credentials, NetPA credentials, channel IDs, CP keys (`CP_X_API_KEY`, `CP_CONNECT_ID`, `CP_CONNECT_SECRET`), plus the Metro OAuth credentials (`METRO_CLIENT_ID`, `METRO_CLIENT_SECRET`).
+   - `CP_PANEL_CHANNEL_ID` and `METRO_PANEL_CHANNEL_ID` control where the bot posts the interactive panels (use the IDs provided in Discord like `1439603932379873310`).
+   - The bot now fetches Metro Lisboa access tokens automatically via the Client Credentials flow. Provide the same client/secret you use on the API portal; optionally tune `METRO_API_BASE_URL`/`METRO_TOKEN_URL`, set `METRO_TLS_REJECT_UNAUTHORIZED=false` to mimic `curl -k`, or point `METRO_CA_CERT_PATH` to a PEM bundle if you have the proper CA chain.
    - Flip `ENABLE_SCHEDULE_WATCHER` or `ENABLE_ANNOUNCEMENTS_WATCHER` to `false` while developing if you do not want Playwright scrapers to run.
    - Never commit your `.env` file or tokens.
 
@@ -45,6 +45,13 @@ Discord bot designed for a school server with music playback, command management
    ```pwsh
    npm run register:commands
    ```
+
+## Metro Lisboa Panel
+
+- Run `/metro publicar` (requires the Manage Server permission) after configuring `METRO_PANEL_CHANNEL_ID` to publish or refresh the embed with the dropdown menus per linha.
+- Users pick the linha/estação directly from the panel in the configured channel. After selecting, an ephemeral embed appears with another dropdown to choose the **sentido** (destino) and a refresh button.
+- Data comes from the official EstadoServicoML APIs (`/infoEstacao/todos`, `/infoDestinos/todos`, `/tempoEspera/Estacao/{id}`) using OAuth tokens requested automatically via `METRO_CLIENT_ID`/`METRO_CLIENT_SECRET`.
+- The bot stores the Metro panel message ID in `data/state.json` so subsequent `/metro publicar` executions update the same message instead of creating duplicates.
 
 ## Additional Notes
 

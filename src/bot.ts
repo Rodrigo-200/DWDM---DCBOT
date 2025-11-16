@@ -1,6 +1,7 @@
 import { Client, Collection, Events, GatewayIntentBits, Interaction, MessageFlags } from 'discord.js';
 
 import { createCpInteractionHandler } from './features/cp/interactionHandler.js';
+import { createMetroInteractionHandler } from './features/metro/interactionHandler.js';
 import { getEnv } from './utils/env.js';
 import { logger } from './utils/logger.js';
 import { JsonStorage } from './utils/storage.js';
@@ -9,6 +10,8 @@ import { initializeTasks } from './tasks/index.js';
 import type { BotCommand, CommandContext } from './types.js';
 import { defaultState, type PersistentState } from './state.js';
 import { CpClient } from './services/cpClient.js';
+import { MetroAuthManager } from './services/metroAuth.js';
+import { MetroClient } from './services/metroClient.js';
 
 type CommandCollection = Collection<string, BotCommand>;
 
@@ -30,7 +33,10 @@ const bootstrap = async () => {
 
   const stateStorage = new JsonStorage<PersistentState>('data/state.json', defaultState);
   const cpClient = new CpClient({ env });
+  const metroAuthManager = new MetroAuthManager({ env });
+  const metroClient = new MetroClient({ env, authManager: metroAuthManager });
   const cpInteractionHandler = createCpInteractionHandler({ env, cpClient });
+  const metroInteractionHandler = createMetroInteractionHandler({ env, metroClient });
 
   client.once(Events.ClientReady, (readyClient: Client<true>) => {
     const user = readyClient.user;
@@ -48,6 +54,16 @@ const bootstrap = async () => {
       }
     } catch (error) {
       logger.error('CP interaction handler failed', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+
+    try {
+      if (await metroInteractionHandler(interaction)) {
+        return;
+      }
+    } catch (error) {
+      logger.error('Metro interaction handler failed', {
         error: error instanceof Error ? error.message : String(error)
       });
     }

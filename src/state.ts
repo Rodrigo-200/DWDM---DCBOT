@@ -16,6 +16,7 @@ export interface PersistentState {
   scheduleLastAttemptAt?: string | null;
   scheduleLastSuccessAt?: string | null;
   cpPanelMessageId: string | null;
+  metroPanelMessageId: string | null;
 }
 
 export const defaultState: PersistentState = {
@@ -26,5 +27,6 @@ export const defaultState: PersistentState = {
   scheduleEntries: [],
   scheduleLastAttemptAt: null,
   scheduleLastSuccessAt: null,
-  cpPanelMessageId: null
+  cpPanelMessageId: null,
+  metroPanelMessageId: null
 };

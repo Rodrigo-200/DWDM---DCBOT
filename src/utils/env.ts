@@ -27,7 +27,14 @@ const envSchema = z.object({
   CP_X_API_KEY: z.string().optional(),
   CP_CONNECT_ID: z.string().optional(),
   CP_CONNECT_SECRET: z.string().optional(),
-  CP_PANEL_CHANNEL_ID: z.string().min(1)
+  CP_PANEL_CHANNEL_ID: z.string().min(1),
+  METRO_API_BASE_URL: z.string().url().default('https://api.metrolisboa.pt:8243/estadoServicoML/1.0.1'),
+  METRO_TOKEN_URL: z.string().url().default('https://api.metrolisboa.pt:8243/token'),
+  METRO_CLIENT_ID: z.string().min(1),
+  METRO_CLIENT_SECRET: z.string().min(1),
+  METRO_PANEL_CHANNEL_ID: z.string().min(1),
+  METRO_TLS_REJECT_UNAUTHORIZED: booleanFlag,
+  METRO_CA_CERT_PATH: z.string().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;
