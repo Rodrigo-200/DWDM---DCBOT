@@ -515,9 +515,18 @@ export class ScheduleClient {
       return null;
     }
 
-    const startDate = new Date(event.startIso);
+    // NetPA returns ISO strings without timezone info, treat them as Lisbon time
+    let startDate = new Date(event.startIso);
     if (Number.isNaN(startDate.getTime())) {
       return null;
+    }
+    
+    // If the ISO string doesn't have timezone info (no Z or offset), it's parsed as local time
+    // We need to interpret it as Lisbon time instead
+    if (!event.startIso.includes('Z') && !event.startIso.match(/[+-]\d{2}:\d{2}$/)) {
+      // Parse as if it were UTC, then it will display correctly in Lisbon timezone
+      const isoWithZ = event.startIso.includes('T') ? `${event.startIso}Z` : `${event.startIso}T00:00:00Z`;
+      startDate = new Date(isoWithZ);
     }
 
     const chunks = event.titleHtml
@@ -566,14 +575,12 @@ export class ScheduleClient {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
-      timeZone: this.getTimeZone()
+      timeZone: 'Europe/Lisbon'
     });
     return formatter.format(date);
   }
 
-  private getTimeZone() {
-    return this.env.TIMEZONE || 'Europe/Lisbon';
-  }
+
 
   private normalizeText(value: string) {
     return this.stripHtml(value)

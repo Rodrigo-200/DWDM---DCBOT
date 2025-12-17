@@ -326,8 +326,8 @@ const buildScheduleEmbed = (entries: ScheduleEntry[], options: { serviceUnavaila
 };
 
 const groupEntriesByDay = (entries: ScheduleEntry[]) => {
-  const weekdayFormatter = new Intl.DateTimeFormat('pt-PT', { weekday: 'long' });
-  const dateFormatter = new Intl.DateTimeFormat('pt-PT', { day: 'numeric', month: 'short' });
+  const weekdayFormatter = new Intl.DateTimeFormat('pt-PT', { weekday: 'long', timeZone: 'Europe/Lisbon' });
+  const dateFormatter = new Intl.DateTimeFormat('pt-PT', { day: 'numeric', month: 'short', timeZone: 'Europe/Lisbon' });
 
   const groups = new Map<string, ScheduleEntry[]>();
 
@@ -461,7 +461,8 @@ const getScheduleRangeLabel = (entries: ScheduleEntry[]) => {
   const [first, last] = [dates[0], dates[dates.length - 1]];
   const formatter = new Intl.DateTimeFormat('pt-PT', {
     day: 'numeric',
-    month: 'short'
+    month: 'short',
+    timeZone: 'Europe/Lisbon'
   });
 
   const start = formatter.format(first);
@@ -474,7 +475,7 @@ const getScheduleRangeLabel = (entries: ScheduleEntry[]) => {
 
 const formatHeadline = (entry: ScheduleEntry) => {
   const entryDate = getEntryDate(entry);
-  const dayFormatter = new Intl.DateTimeFormat('pt-PT', { weekday: 'short' });
+  const dayFormatter = new Intl.DateTimeFormat('pt-PT', { weekday: 'short', timeZone: 'Europe/Lisbon' });
   const time = entry.date ? entry.time.replace(/^[^ ]+\s/, '') : entry.time;
   const { plainName, courseCode } = parseCourseMeta(entry.title);
 
